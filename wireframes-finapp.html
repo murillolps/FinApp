@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinApp — Wireframes MVP</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f4f6;
+    --paper: #ffffff;
+    --line: #c9c9d1;
+    --line-dashed: #b3b3bd;
+    --ink: #2a2a33;
+    --muted: #7a7a85;
+    --accent: #4a5a8a;
+    --green: #5a8a5a;
+    --red: #b35a5a;
+    --yellow: #c79a3d;
+    --tab-active: #2a2a33;
+    --shadow: 0 1px 0 rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; }
+  header.topbar {
+    background: var(--paper); border-bottom: 1px solid var(--line);
+    padding: 14px 24px; display: flex; align-items: center; gap: 24px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand { font-weight: 700; letter-spacing: .5px; }
+  .brand .dot { color: var(--accent); }
+  nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav.tabs button {
+    background: transparent; border: 1px solid transparent; border-radius: 8px;
+    padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--muted);
+  }
+  nav.tabs button:hover { background: #ececf2; color: var(--ink); }
+  nav.tabs button.active { background: var(--tab-active); color: #fff; }
+  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .page { display: none; }
+  .page.active { display: block; }
+  h1, h2, h3 { color: var(--ink); }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  /* Cards / wireframe blocks */
+  .card {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 10px; padding: 18px; box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: 16px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 900px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  .kpi { display: flex; flex-direction: column; gap: 4px; }
+  .kpi .label { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+  .kpi .value { font-size: 22px; font-weight: 700; }
+  .kpi .delta { font-size: 12px; color: var(--muted); }
+  .kpi.green .value { color: var(--green); }
+  .kpi.red .value { color: var(--red); }
+  .kpi.yellow .value { color: var(--yellow); }
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+    border-radius: 8px; border: 1px solid var(--line); background: var(--paper);
+    color: var(--ink); cursor: pointer; font-size: 13px; }
+  .btn:hover { background: #ececf2; }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(.95); }
+  .btn.ghost { border: 1px dashed var(--line-dashed); }
+  .btn.danger { color: var(--red); border-color: var(--red); }
+  .btn.sm { padding: 4px 8px; font-size: 12px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  /* Form-ish wireframe controls */
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .field label { font-size: 12px; color: var(--muted); }
+  .field .ctrl, input.wire, select.wire, textarea.wire {
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+    background: #fafafd; font-size: 13px; min-height: 36px; color: var(--ink);
+    width: 100%;
+  }
+  .ctrl.dashed { border-style: dashed; color: var(--muted); }
+  /* Table */
+  table.wire { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.wire th, table.wire td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #ececf2; }
+  table.wire th { background: #f7f7fa; color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; }
+  table.wire tr.future { background: repeating-linear-gradient(45deg, transparent, transparent 6px, #fafafd 6px, #fafafd 12px); color: var(--muted); }
+  td.saldo-pos { color: var(--green); font-weight: 600; }
+  td.saldo-neg { color: var(--red); font-weight: 600; }
+  td.saldo-warn { color: var(--yellow); font-weight: 600; }
+  /* Modal-like card */
+  .modal-shell { max-width: 480px; margin: 0 auto; }
+  /* Sketchy boxes */
+  .sketch { border: 1px dashed var(--line-dashed); border-radius: 8px;
+    padding: 16px; color: var(--muted); text-align: center; font-size: 12px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; background: #ececf2; color: var(--muted); }
+  .pill.entrada { background: #e3f1e3; color: var(--green); }
+  .pill.saida { background: #f6e4e4; color: var(--red); }
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+  .row-flex { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  /* Mermaid container */
+  .mermaid-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 18px; overflow: auto; }
+  /* Note callouts */
+  .note { background: #fff8e8; border-left: 3px solid var(--yellow); padding: 10px 14px;
+    border-radius: 4px; font-size: 13px; color: #6a5a20; margin: 12px 0; }
+  .note strong { color: #4a3e10; }
+  /* Bar/line chart wireframe */
+  .chart-bar { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding: 8px; border-bottom: 1px solid var(--line); }
+  .chart-bar .bar { flex: 1; background: linear-gradient(to top, var(--accent), #8a9acb); border-radius: 4px 4px 0 0; }
+  .chart-line { height: 140px; position: relative; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .chart-line svg { width: 100%; height: 100%; }
+  .chart-pie { width: 140px; height: 140px; border-radius: 50%;
+    background: conic-gradient(#4a5a8a 0 30%, #8a9acb 30% 55%, #c7b07a 55% 75%, #b35a5a 75% 90%, #5a8a5a 90% 100%); }
+  .pie-row { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .pie-legend li { font-size: 12px; margin: 4px 0; list-style: none; }
+  .pie-legend li::before { content: ''; display: inline-block; width: 10px; height: 10px;
+    margin-right: 6px; border-radius: 2px; vertical-align: middle; background: #ccc; }
+  .pie-legend li.c1::before { background: #4a5a8a; }
+  .pie-legend li.c2::before { background: #8a9acb; }
+  .pie-legend li.c3::before { background: #c7b07a; }
+  .pie-legend li.c4::before { background: #b35a5a; }
+  .pie-legend li.c5::before { background: #5a8a5a; }
+  /* Footer */
+  footer.foot { padding: 24px; text-align: center; color: var(--muted); font-size: 11px; }
+  /* Print-ish wireframe */
+  .screen-frame {
+    background: var(--paper); border: 2px solid var(--ink); border-radius: 16px;
+    padding: 0; overflow: hidden; box-shadow: var(--shadow);
+  }
+  .screen-frame .screen-bar {
+    height: 28px; background: #ececf2; display: flex; align-items: center; padding: 0 10px;
+    gap: 6px; border-bottom: 1px solid var(--line);
+  }
+  .screen-frame .dot-r { width: 8px; height: 8px; border-radius: 50%; background: #b35a5a; }
+  .screen-frame .dot-y { width: 8px; height: 8px; border-radius: 50%; background: #c7b07a; }
+  .screen-frame .dot-g { width: 8px; height: 8px; border-radius: 50%; background: #5a8a5a; }
+  .screen-frame .screen-body { padding: 18px; }
+  .icon-circ { display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+    background: #ececf2; text-align: center; line-height: 22px; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Fin<span class="dot">$</span>App <span style="color:var(--muted);font-weight:400;font-size:12px;">— Wireframes MVP v0.1</span></div>
+  <nav class="tabs" id="tabs">
+    <button data-target="login" class="active">Login</button>
+    <button data-target="dashboard">Dashboard</button>
+    <button data-target="transacoes">Transações</button>
+    <button data-target="nova">Nova Transação</button>
+    <button data-target="categorias">Categorias</button>
+    <button data-target="recorrencias">Recorrências</button>
+    <button data-target="relatorios">Relatórios</button>
+    <button data-target="modelo">Modelo de Dados</button>
+    <button data-target="fluxo">Fluxo de Telas</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- =================== LOGIN =================== -->
+<section class="page active" id="login">
+  <h1>Login / Cadastro</h1>
+  <p class="subtitle">Tela de entrada. Multi-usuário desde o início (mesmo que só você use no começo).</p>
+  <div class="screen-frame modal-shell">
+    <div class="screen-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+    <div class="screen-body">
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-size:32px;font-weight:700;">Fin<span style="color:var(--accent)">$</span>App</div>
+        <div style="color:var(--muted);font-size:12px;">Controle financeiro pessoal</div>
+      </div>
+      <div class="field">
+        <label>E-mail</label>
+        <div class="ctrl dashed">seu@email.com</div>
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <div class="ctrl dashed">••••••••</div>
+      </div>
+      <button class="btn primary" style="width:100%;justify-content:center;">Entrar</button>
+      <div style="text-align:center;margin-top:12px;font-size:12px;">
+        <a href="#" style="color:var(--muted);">Esqueci minha senha</a>
+        &nbsp;·&nbsp;
+        <a href="#" style="color:var(--accent);">Criar conta</a>
+      </div>
+      <div style="text-align:center;margin-top:18px;">
+        <div style="border-top:1px dashed var(--line);position:relative;margin:14px 0;">
+          <span style="background:#fff;padding:0 10px;color:var(--muted);font-size:11px;position:relative;top:-9px;">ou</span>
+        </div>
+        <button class="btn" style="width:100%;justify-content:center;">Entrar com Google</button>
+      </div>
+    </div>
+  </div>
+  <div class="note"><strong>Decisão técnica:</strong> autenticação via e-mail/senha + Google OAuth (Supabase Auth, Auth0 ou Firebase). Sessão JWT, expiração de 7 dias com refresh.</div>
+</section>
+
+<!-- =================== DASHBOARD =================== -->
+<section class="page" id="dashboard">
+  <h1>Dashboard</h1>
+  <p class="subtitle">A primeira tela depois do login. Resposta direta às perguntas: "quanto tenho?", "quanto tinha?", "como vou ficar?".</p>
+
+  <div class="card">
+    <div class="row-flex" style="justify-content:space-between;">
+      <div>
+        <div style="font-size:13px;color:var(--muted);">Olá, Murillo 👋</div>
+        <div style="font-size:18px;font-weight:600;">Maio / 2026</div>
+      </div>
+      <div class="row-flex">
+        <button class="btn">‹ Mês anterior</button>
+        <button class="btn">Hoje</button>
+        <button class="btn">Próximo mês ›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="grid grid-4">
+      <div class="kpi green">
+        <span class="label">Saldo atual</span>
+        <span class="value">R$ 1.247,80</span>
+        <span class="delta">↑ R$ 800,00 desde a última entrada</span>
+      </div>
+      <div class="kpi">
+        <span class="label">Saldo antes da entrada</span>
+        <span class="value">R$ 447,80</span>
+        <span class="delta">em 30/04</span>
+      </div>
+      <div class="kpi yellow">
+        <span class="label">Projeção fim do mês</span>
+        <span class="value">R$ 268,30</span>
+        <span class="delta">após gastos fixos previstos</span>
+      </div>
+      <div class="kpi red">
+        <span class="label">Gasto no mês</span>
+        <span class="value">R$ 979,50</span>
+        <span class="delta">em 12 lançamentos</span>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--green)"></span>Confortável (&gt; 30% da entrada)</span>
+      <span><span class="swatch" style="background:var(--yellow)"></span>Apertado</span>
+      <span><span class="swatch" style="background:var(--red)"></span>Negativo / risco</span>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:16px;">
+    <div class="card">
+      <h3 style="margin-top:0;">Evolução do saldo no mês</h3>
+      <div class="chart-line">
+        <svg viewBox="0 0 400 140" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#4a5a8a" stroke-width="2"
+            points="0,40 40,42 80,80 120,78 160,75 200,90 240,100 280,95 320,60 360,58 400,90"/>
+          <polyline fill="none" stroke="#c7b07a" stroke-width="2" stroke-dasharray="4,3"
+            points="400,90 440,100 480,110"/>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--accent)"></span>Realizado</span>
+        <span><span class="swatch" style="background:var(--yellow)"></span>Projetado</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Próximas recorrências</h3>
+      <table class="wire">
+        <tr><th>Quando</th><th>Item</th><th>Valor</th></tr>
+        <tr><td>10/05</td><td>Internet</td><td>R$ 104,50</td></tr>
+        <tr><td>15/05</td><td>Celular</td><td>R$ 75,00</td></tr>
+        <tr><td>20/05</td><td>Streaming</td><td>R$ 39,90</td></tr>
+        <tr><td>30/05</td><td>Salário</td><td style="color:var(--green);">+ R$ 800,00</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row-flex" style="justify-content:space-between;">
+      <h3 style="margin:0;">Ações rápidas</h3>
+      <div class="row-flex">
+        <button class="btn primary">+ Entrada</button>
+        <button class="btn">– Saída</button>
+        <button class="btn ghost">Importar extrato (futuro)</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== TRANSACOES =================== -->
+<section class="page" id="transacoes">
+  <h1>Transações do Mês</h1>
+  <p class="subtitle">A tabela equivalente à sua planilha — mas com projeção do restante do mês embutida.</p>
+
+  <div class="card">
+    <div class="row-flex" style="justify-content:space-between;">
+      <div class="row-flex">
+        <select class="wire" style="width:auto;"><option>Maio / 2026</option></select>
+        <select class="wire" style="width:auto;"><option>Todas as categorias</option></select>
+        <select class="wire" style="width:auto;"><option>Tipo: todos</option></select>
+      </div>
+      <div class="row-flex">
+        <button class="btn primary">+ Nova entrada</button>
+        <button class="btn">+ Nova saída</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:auto;">
+    <table class="wire">
+      <thead>
+        <tr>
+          <th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th>
+          <th style="text-align:right;">Entrada</th><th style="text-align:right;">Saída</th>
+          <th style="text-align:right;">Saldo</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>30/04</td><td><span class="pill entrada">Entrada</span></td><td>Salário</td><td>Pagamento abril</td>
+          <td style="text-align:right;">R$ 800,00</td><td></td><td class="saldo-pos" style="text-align:right;">R$ 1.247,80</td>
+          <td><button class="btn sm">⋯</button></td></tr>
+        <tr><td>02/05</td><td><span class="pill saida">Saída</span></td><td>Mercado</td><td>Compra do mês</td>
+          <td></td><td style="text-align:right;">R$ 303,64</td><td class="saldo-pos" style="text-align:right;">R$ 944,16</td>
+          <td><button class="btn sm">⋯</button></td></tr>
+        <tr><td>03/05</td><td><span class="pill saida">Saída</span></td><td>Lanche</td><td>Padaria</td>
+          <td></td><td style="text-align:right;">R$ 18,50</td><td class="saldo-pos" style="text-align:right;">R$ 925,66</td>
+          <td><button class="btn sm">⋯</button></td></tr>
+        <tr><td>05/05</td><td><span class="pill saida">Saída</span></td><td>Transporte</td><td>Uber</td>
+          <td></td><td style="text-align:right;">R$ 22,80</td><td class="saldo-pos" style="text-align:right;">R$ 902,86</td>
+          <td><button class="btn sm">⋯</button></td></tr>
+        <tr class="future"><td>10/05</td><td><span class="pill saida">Saída</span></td><td>Casa</td><td>Internet (recorrência)</td>
+          <td></td><td style="text-align:right;">R$ 104,50</td><td class="saldo-pos" style="text-align:right;">R$ 798,36</td>
+          <td><button class="btn sm">⋯</button></td></tr>
+        <tr class="future"><td>15/05</td><td><span class="pill saida">Saída</span></td><td>Casa</td><td>Celular (recorrência)</td>
+          <td></td><td style="text-align:right;">R$ 75,00</td><td class="saldo-pos" style="text-align:right;">R$ 723,36</td>
+          <td><button class="btn sm">⋯</button></td></tr>
+        <tr class="future"><td>20/05</td><td><span class="pill saida">Saída</span></td><td>Lazer</td><td>Streaming (recorrência)</td>
+          <td></td><td style="text-align:right;">R$ 39,90</td><td class="saldo-warn" style="text-align:right;">R$ 268,30</td>
+          <td><button class="btn sm">⋯</button></td></tr>
+        <tr class="future"><td>30/05</td><td><span class="pill entrada">Entrada</span></td><td>Salário</td><td>Salário maio (recorrência)</td>
+          <td style="text-align:right;">R$ 800,00</td><td></td><td class="saldo-pos" style="text-align:right;">R$ 1.068,30</td>
+          <td><button class="btn sm">⋯</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="legend">
+    <span><span class="swatch" style="background:repeating-linear-gradient(45deg,#fff,#fff 4px,#fafafd 4px,#fafafd 8px);border:1px solid var(--line);"></span>Linhas hachuradas = projeção (recorrências futuras)</span>
+  </div>
+</section>
+
+<!-- =================== NOVA TRANSACAO =================== -->
+<section class="page" id="nova">
+  <h1>Nova Transação</h1>
+  <p class="subtitle">Modal aberto a partir do dashboard ou da tabela. Lançamento rápido, com poucos campos.</p>
+
+  <div class="screen-frame modal-shell">
+    <div class="screen-bar"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+    <div class="screen-body">
+      <h3 style="margin-top:0;">Nova transação</h3>
+
+      <div class="field">
+        <label>Tipo</label>
+        <div class="row-flex">
+          <button class="btn primary" style="flex:1;justify-content:center;">↑ Entrada</button>
+          <button class="btn" style="flex:1;justify-content:center;">↓ Saída</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Valor</label>
+        <div class="ctrl dashed">R$ 0,00</div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="field">
+          <label>Data</label>
+          <div class="ctrl dashed">06/05/2026</div>
+        </div>
+        <div class="field">
+          <label>Categoria</label>
+          <div class="ctrl dashed">Selecione ▾</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Descrição (opcional)</label>
+        <div class="ctrl dashed">Ex.: Almoço com a equipe</div>
+      </div>
+
+      <div class="field">
+        <label><input type="checkbox"> Repetir esta transação</label>
+        <div class="grid grid-2" style="margin-top:8px;">
+          <div class="ctrl dashed">Frequência: mensal ▾</div>
+          <div class="ctrl dashed">Repetir até: indefinido ▾</div>
+        </div>
+      </div>
+
+      <div class="row-flex" style="justify-content:flex-end;margin-top:12px;">
+        <button class="btn">Cancelar</button>
+        <button class="btn primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== CATEGORIAS =================== -->
+<section class="page" id="categorias">
+  <h1>Categorias</h1>
+  <p class="subtitle">Categorias customizáveis: cada usuário cria as suas. Já vem com um conjunto inicial sugerido.</p>
+
+  <div class="card">
+    <div class="row-flex" style="justify-content:space-between;">
+      <div class="row-flex">
+        <select class="wire" style="width:auto;"><option>Todas</option><option>Entradas</option><option>Saídas</option></select>
+        <input type="text" class="wire" placeholder="Buscar..." style="width:200px;">
+      </div>
+      <button class="btn primary">+ Nova categoria</button>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;">
+    <table class="wire">
+      <thead>
+        <tr><th>Categoria</th><th>Tipo</th><th>Cor</th><th style="text-align:right;">Total no mês</th><th>Ações</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="icon-circ">🍔</span> Alimentação</td><td><span class="pill saida">Saída</span></td><td><span style="background:#b35a5a;display:inline-block;width:18px;height:12px;border-radius:3px;"></span></td><td style="text-align:right;">R$ 322,14</td><td><button class="btn sm">Editar</button> <button class="btn sm danger">Arquivar</button></td></tr>
+        <tr><td><span class="icon-circ">🏠</span> Casa</td><td><span class="pill saida">Saída</span></td><td><span style="background:#c7b07a;display:inline-block;width:18px;height:12px;border-radius:3px;"></span></td><td style="text-align:right;">R$ 179,50</td><td><button class="btn sm">Editar</button> <button class="btn sm danger">Arquivar</button></td></tr>
+        <tr><td><span class="icon-circ">🚗</span> Transporte</td><td><span class="pill saida">Saída</span></td><td><span style="background:#4a5a8a;display:inline-block;width:18px;height:12px;border-radius:3px;"></span></td><td style="text-align:right;">R$ 67,30</td><td><button class="btn sm">Editar</button> <button class="btn sm danger">Arquivar</button></td></tr>
+        <tr><td><span class="icon-circ">🎬</span> Lazer</td><td><span class="pill saida">Saída</span></td><td><span style="background:#8a9acb;display:inline-block;width:18px;height:12px;border-radius:3px;"></span></td><td style="text-align:right;">R$ 39,90</td><td><button class="btn sm">Editar</button> <button class="btn sm danger">Arquivar</button></td></tr>
+        <tr><td><span class="icon-circ">💼</span> Salário</td><td><span class="pill entrada">Entrada</span></td><td><span style="background:#5a8a5a;display:inline-block;width:18px;height:12px;border-radius:3px;"></span></td><td style="text-align:right;">R$ 800,00</td><td><button class="btn sm">Editar</button> <button class="btn sm danger">Arquivar</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">Modal: Nova categoria</h3>
+    <div class="grid grid-2">
+      <div class="field"><label>Nome</label><div class="ctrl dashed">Ex.: Saúde</div></div>
+      <div class="field"><label>Tipo</label><div class="ctrl dashed">Saída ▾</div></div>
+      <div class="field"><label>Cor</label><div class="ctrl dashed">Selecionar ▾</div></div>
+      <div class="field"><label>Ícone</label><div class="ctrl dashed">Selecionar ▾</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== RECORRENCIAS =================== -->
+<section class="page" id="recorrencias">
+  <h1>Recorrências (Gastos e Entradas Fixas)</h1>
+  <p class="subtitle">Equivalente à sua tabela "Gastos Fixos". O motor que alimenta a projeção mensal.</p>
+
+  <div class="card">
+    <div class="row-flex" style="justify-content:space-between;">
+      <div class="row-flex">
+        <select class="wire" style="width:auto;"><option>Ativas</option><option>Pausadas</option><option>Todas</option></select>
+      </div>
+      <button class="btn primary">+ Nova recorrência</button>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;">
+    <table class="wire">
+      <thead>
+        <tr><th>Item</th><th>Tipo</th><th>Categoria</th><th>Frequência</th><th>Próx. lançamento</th><th style="text-align:right;">Valor</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Salário</td><td><span class="pill entrada">Entrada</span></td><td>Salário</td><td>Mensal · dia 30</td><td>30/05/2026</td><td style="text-align:right;color:var(--green);">+ R$ 800,00</td><td>Ativa</td><td><button class="btn sm">⋯</button></td></tr>
+        <tr><td>Internet</td><td><span class="pill saida">Saída</span></td><td>Casa</td><td>Mensal · dia 10</td><td>10/05/2026</td><td style="text-align:right;">R$ 104,50</td><td>Ativa</td><td><button class="btn sm">⋯</button></td></tr>
+        <tr><td>Celular</td><td><span class="pill saida">Saída</span></td><td>Casa</td><td>Mensal · dia 15</td><td>15/05/2026</td><td style="text-align:right;">R$ 75,00</td><td>Ativa</td><td><button class="btn sm">⋯</button></td></tr>
+        <tr><td>Streaming</td><td><span class="pill saida">Saída</span></td><td>Lazer</td><td>Mensal · dia 20</td><td>20/05/2026</td><td style="text-align:right;">R$ 39,90</td><td>Ativa</td><td><button class="btn sm">⋯</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <strong>Regra de negócio importante:</strong> as recorrências NÃO criam transações reais até a data acontecer. Elas aparecem como "linhas projetadas" na tabela do mês (hachuradas) e viram transações concretas no dia certo (ou quando o usuário confirma). Isso permite ajustar valores na hora.
+  </div>
+</section>
+
+<!-- =================== RELATORIOS =================== -->
+<section class="page" id="relatorios">
+  <h1>Relatórios</h1>
+  <p class="subtitle">Visualizações pra entender padrões: pra onde o dinheiro vai, como está mês a mês.</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3 style="margin-top:0;">Gastos por categoria — maio</h3>
+      <div class="pie-row">
+        <div class="chart-pie"></div>
+        <ul class="pie-legend" style="padding:0;margin:0;">
+          <li class="c1">Alimentação — 33%</li>
+          <li class="c2">Casa — 27%</li>
+          <li class="c3">Transporte — 18%</li>
+          <li class="c4">Lazer — 12%</li>
+          <li class="c5">Outros — 10%</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">Saldo final mês a mês</h3>
+      <div class="chart-bar">
+        <div class="bar" style="height:30%;"></div>
+        <div class="bar" style="height:55%;"></div>
+        <div class="bar" style="height:25%;"></div>
+        <div class="bar" style="height:60%;"></div>
+        <div class="bar" style="height:80%;"></div>
+        <div class="bar" style="height:45%;"></div>
+      </div>
+      <div class="legend">
+        <span>Dez · Jan · Fev · Mar · Abr · Mai</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">Entrada x Saída (últimos 6 meses)</h3>
+    <div class="chart-bar">
+      <div style="display:flex;flex-direction:column;flex:1;gap:2px;height:100%;justify-content:flex-end;">
+        <div style="background:#5a8a5a;height:60%;border-radius:3px 3px 0 0;"></div>
+        <div style="background:#b35a5a;height:25%;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;flex:1;gap:2px;height:100%;justify-content:flex-end;">
+        <div style="background:#5a8a5a;height:75%;border-radius:3px 3px 0 0;"></div>
+        <div style="background:#b35a5a;height:40%;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;flex:1;gap:2px;height:100%;justify-content:flex-end;">
+        <div style="background:#5a8a5a;height:55%;border-radius:3px 3px 0 0;"></div>
+        <div style="background:#b35a5a;height:35%;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;flex:1;gap:2px;height:100%;justify-content:flex-end;">
+        <div style="background:#5a8a5a;height:70%;border-radius:3px 3px 0 0;"></div>
+        <div style="background:#b35a5a;height:30%;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;flex:1;gap:2px;height:100%;justify-content:flex-end;">
+        <div style="background:#5a8a5a;height:80%;border-radius:3px 3px 0 0;"></div>
+        <div style="background:#b35a5a;height:50%;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;flex:1;gap:2px;height:100%;justify-content:flex-end;">
+        <div style="background:#5a8a5a;height:65%;border-radius:3px 3px 0 0;"></div>
+        <div style="background:#b35a5a;height:45%;"></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--green)"></span>Entradas</span>
+      <span><span class="swatch" style="background:var(--red)"></span>Saídas</span>
+    </div>
+  </div>
+</section>
+
+<!-- =================== MODELO DE DADOS =================== -->
+<section class="page" id="modelo">
+  <h1>Modelo de Dados (ER)</h1>
+  <p class="subtitle">Diagrama das entidades e relacionamentos. Base pra qualquer banco relacional (Postgres, MySQL, SQLite).</p>
+
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+erDiagram
+    USERS ||--o{ ACCOUNTS : owns
+    USERS ||--o{ CATEGORIES : creates
+    USERS ||--o{ TRANSACTIONS : records
+    USERS ||--o{ RECURRENCES : schedules
+    ACCOUNTS ||--o{ TRANSACTIONS : holds
+    CATEGORIES ||--o{ TRANSACTIONS : classifies
+    CATEGORIES ||--o{ RECURRENCES : classifies
+    RECURRENCES ||--o{ TRANSACTIONS : generates
+
+    USERS {
+      uuid id PK
+      string email UK
+      string name
+      string password_hash
+      datetime created_at
+      datetime last_login_at
+    }
+    ACCOUNTS {
+      uuid id PK
+      uuid user_id FK
+      string name
+      string type "checking|wallet|savings"
+      decimal initial_balance
+      datetime created_at
+      boolean archived
+    }
+    CATEGORIES {
+      uuid id PK
+      uuid user_id FK
+      string name
+      string type "income|expense"
+      string color
+      string icon
+      boolean archived
+      datetime created_at
+    }
+    TRANSACTIONS {
+      uuid id PK
+      uuid user_id FK
+      uuid account_id FK
+      uuid category_id FK
+      uuid recurrence_id FK "nullable"
+      string type "income|expense"
+      decimal amount
+      date occurred_on
+      string description
+      datetime created_at
+      datetime updated_at
+    }
+    RECURRENCES {
+      uuid id PK
+      uuid user_id FK
+      uuid account_id FK
+      uuid category_id FK
+      string type "income|expense"
+      decimal amount
+      string description
+      string frequency "monthly|weekly|yearly"
+      int day_of_month
+      date start_date
+      date end_date "nullable"
+      boolean active
+      datetime created_at
+    }
+    </pre>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">Notas sobre o modelo</h3>
+    <ul>
+      <li><strong>Multi-usuário desde o início:</strong> toda entidade tem <code>user_id</code>. Isolamento via <em>row-level security</em> no banco.</li>
+      <li><strong>ACCOUNTS</strong> entra no MVP como <em>conta única</em> ("Carteira Principal") criada automaticamente no signup. Mas o schema já suporta múltiplas contas pra evolução futura.</li>
+      <li><strong>RECURRENCES</strong> não duplica linhas — gera transações concretas só na data certa (ou sob demanda na UI). A tabela do mês mostra projeções "virtuais" calculadas em runtime.</li>
+      <li><strong>Saldo</strong> não é coluna armazenada: é calculado por <code>SUM(entradas) − SUM(saídas)</code> sobre as transações até a data. Pra performance futura: criar view materializada ou snapshot mensal.</li>
+      <li><strong>Soft delete:</strong> categorias e contas usam <code>archived</code> em vez de delete físico, pra não quebrar transações antigas.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- =================== FLUXO DE TELAS =================== -->
+<section class="page" id="fluxo">
+  <h1>Fluxo de Telas (User Flow)</h1>
+  <p class="subtitle">Como o usuário navega entre as telas no MVP.</p>
+
+  <div class="mermaid-wrap">
+    <pre class="mermaid">
+flowchart TD
+    A[Login / Cadastro] -->|primeiro acesso| B[Onboarding rápido<br/>- nome<br/>- saldo inicial]
+    A -->|usuário existente| C[Dashboard]
+    B --> C
+    C -->|+ Entrada / + Saída| D[Modal: Nova Transação]
+    C -->|ver detalhes| E[Transações do Mês]
+    E -->|+ Nova| D
+    E -->|editar linha| D
+    C -->|menu| F[Categorias]
+    C -->|menu| G[Recorrências]
+    C -->|menu| H[Relatórios]
+    F -->|+ Nova| F2[Modal: Nova Categoria]
+    G -->|+ Nova| G2[Modal: Nova Recorrência]
+    D -->|salvar| C
+    F2 -->|salvar| F
+    G2 -->|salvar| G
+    </pre>
+  </div>
+
+  <div class="note">
+    <strong>Princípio de UX:</strong> tudo o que o usuário faz no dia a dia (lançar entrada/saída) tem que estar a 1 clique de distância do dashboard. Configurações (categorias, recorrências) ficam no menu, fora do caminho principal.
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  Wireframe de baixa fidelidade · FinApp MVP · gerado pra Murillo · maio/2026
+</footer>
+
+<script>
+  document.querySelectorAll('#tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.target).classList.add('active');
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    });
+  });
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+  }
+</script>
+</body>
+</html>
