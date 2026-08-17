@@ -383,14 +383,15 @@ Aguarde "pode seguir".
 **Objetivo:** ter o MySQL conectado e as tabelas criadas.
 
 **Tarefas:**
-1. Pedir ao Murillo para criar o banco `finapp` no MySQL Workbench (`CREATE DATABASE finapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`) e preencher `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET` e `PORT` no `.env`. Criar também `.env.example` com as mesmas chaves sem valores.
-2. Escrever `backend/db/schema.sql` exatamente como na Parte IV deste documento.
-3. Pedir ao Murillo para rodar o script no MySQL Workbench (ou `mysql -u root -p finapp < db/schema.sql` no terminal) para criar as 4 tabelas.
-4. Criar `backend/src/lib/db.js` exportando um pool de conexões (`mysql2/promise`, `mysql.createPool({...})`) configurado a partir das variáveis do `.env`.
+1. Subir o MySQL local via Docker: `finapp/docker-compose.yml` sobe um MySQL 8 na porta `3306` com o banco `finapp` já criado (usuário `root`, senha `finapp`). Alternativa sem Docker: criar o banco manualmente no MySQL Workbench (`CREATE DATABASE finapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`).
+2. Pedir ao Murillo para preencher `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET` e `PORT` no `.env` (copiado de `.env.example`).
+3. Escrever `backend/db/schema.sql` exatamente como na Parte IV deste documento.
+4. Rodar o script para criar as 4 tabelas: via Docker, `docker exec -i finapp-mysql mysql -uroot -pfinapp finapp < backend/db/schema.sql`; ou `mysql -u root -p finapp < db/schema.sql` apontando para uma instância local/Workbench.
+5. Criar `backend/src/lib/db.js` exportando um pool de conexões (`mysql2/promise`, `mysql.createPool({...})`) configurado a partir das variáveis do `.env`.
 
 **Critérios de aceite:**
 - As 4 tabelas (`users`, `categories`, `recurrences`, `transactions`) existem no banco.
-- MySQL Workbench ou DBeaver abre a conexão e mostra as tabelas vazias.
+- `docker exec -it finapp-mysql mysql -uroot -pfinapp finapp -e "SHOW TABLES;"` (ou MySQL Workbench/DBeaver) mostra as tabelas vazias.
 - Um script simples (ex.: `node -e "..."` chamando o pool) confirma que o backend consegue conectar e rodar `SELECT 1`.
 
 ```
