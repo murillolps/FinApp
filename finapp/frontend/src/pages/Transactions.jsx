@@ -40,12 +40,17 @@ function balanceColorClass(balance, avgMonthlyIncome) {
   return 'text-amber-600';
 }
 
+const PROJECTED_STRIPES = {
+  backgroundImage:
+    'repeating-linear-gradient(45deg, rgba(15,23,42,0.04), rgba(15,23,42,0.04) 4px, transparent 4px, transparent 9px)',
+};
+
 function Transactions() {
   const [month, setMonth] = useState(currentMonth());
   const [typeFilter, setTypeFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [categories, setCategories] = useState([]);
-  const [transactions, setTransactions] = useState([]);
+  const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState(null);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [formDefaultType, setFormDefaultType] = useState('expense');
@@ -55,24 +60,33 @@ function Transactions() {
     api.get('/categories').then(({ data }) => setCategories(data));
   }, []);
 
-  function loadTransactions() {
-    const params = { month };
-    if (typeFilter) params.type = typeFilter;
-    if (categoryFilter) params.categoryId = categoryFilter;
-    api.get('/transactions', { params }).then(({ data }) => {
-      setTransactions(data.transactions);
-      setSummary(data.summary);
+  function loadSummary() {
+    api.get('/transactions', { params: { month } }).then(({ data }) => setSummary(data.summary));
+  }
+
+  function loadMonthTable() {
+    api.get('/transactions/month-table', { params: { month } }).then(({ data }) => {
+      setRows(data.transactions);
     });
   }
 
   useEffect(() => {
-    loadTransactions();
+    loadSummary();
+    loadMonthTable();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, typeFilter, categoryFilter]);
+  }, [month]);
 
   const categoryFilterOptions = typeFilter
     ? categories.filter((category) => category.type === typeFilter)
     : categories;
+
+  const visibleRows = rows.filter((row) => {
+    if (typeFilter && row.type !== typeFilter) return false;
+    if (categoryFilter && row.categoryId !== categoryFilter) return false;
+    return true;
+  });
+
+  const displayedEndBalance = rows.length > 0 ? rows[rows.length - 1].balance : summary?.endBalance;
 
   function openCreate(type) {
     setEditingTransaction(null);
@@ -88,13 +102,15 @@ function Transactions() {
 
   function handleSaved() {
     setShowForm(false);
-    loadTransactions();
+    loadSummary();
+    loadMonthTable();
   }
 
   async function handleDelete(transaction) {
     if (!window.confirm('Excluir esta transação?')) return;
     await api.delete(`/transactions/${transaction.id}`);
-    loadTransactions();
+    loadSummary();
+    loadMonthTable();
   }
 
   return (
@@ -102,7 +118,9 @@ function Transactions() {
       <NavBar />
       <div className="max-w-5xl mx-auto p-6">
         <h1 className="text-2xl font-bold mb-1">Transações do Mês</h1>
-        <p className="text-slate-500 mb-6">A tabela equivalente à sua planilha.</p>
+        <p className="text-slate-500 mb-6">
+          A tabela equivalente à sua planilha, com projeção do restante do mês.
+        </p>
 
         <div className="bg-white rounded-3xl shadow-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -166,26 +184,26 @@ function Transactions() {
         {summary && (
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="bg-white rounded-3xl shadow-lg p-4 text-center">
-              <p className="text-sm text-slate-500">Entradas do mês</p>
+              <p className="text-sm text-slate-500">Entradas realizadas</p>
               <p className="text-lg font-bold text-green-600">
                 {formatCurrency(summary.totalIncome)}
               </p>
             </div>
             <div className="bg-white rounded-3xl shadow-lg p-4 text-center">
-              <p className="text-sm text-slate-500">Saídas do mês</p>
+              <p className="text-sm text-slate-500">Saídas realizadas</p>
               <p className="text-lg font-bold text-red-600">
                 {formatCurrency(summary.totalExpense)}
               </p>
             </div>
             <div className="bg-white rounded-3xl shadow-lg p-4 text-center">
-              <p className="text-sm text-slate-500">Saldo final</p>
+              <p className="text-sm text-slate-500">Saldo final (com projeção)</p>
               <p
                 className={`text-lg font-bold ${balanceColorClass(
-                  summary.endBalance,
+                  displayedEndBalance,
                   summary.avgMonthlyIncome,
                 )}`}
               >
-                {formatCurrency(summary.endBalance)}
+                {formatCurrency(displayedEndBalance)}
               </p>
             </div>
           </div>
@@ -206,8 +224,12 @@ function Transactions() {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((transaction) => (
-                <tr key={transaction.id} className="border-t border-slate-100">
+              {visibleRows.map((transaction) => (
+                <tr
+                  key={transaction.id}
+                  className="border-t border-slate-100"
+                  style={transaction.projected ? PROJECTED_STRIPES : undefined}
+                >
                   <td className="px-4 py-3">{formatDayMonth(transaction.occurredOn)}</td>
                   <td className="px-4 py-3">
                     <span
@@ -224,7 +246,12 @@ function Transactions() {
                     <span className="mr-2">{transaction.category.icon}</span>
                     {transaction.category.name}
                   </td>
-                  <td className="px-4 py-3">{transaction.description}</td>
+                  <td className="px-4 py-3">
+                    {transaction.description}
+                    {transaction.projected && (
+                      <span className="ml-2 text-xs text-slate-400 italic">(projeção)</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     {transaction.type === 'income' ? formatCurrency(transaction.amount) : ''}
                   </td>
@@ -240,22 +267,28 @@ function Transactions() {
                     {formatCurrency(transaction.balance)}
                   </td>
                   <td className="px-4 py-3 text-right space-x-2">
-                    <button
-                      onClick={() => openEdit(transaction)}
-                      className="text-sm rounded-xl border border-slate-300 px-3 py-1"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(transaction)}
-                      className="text-sm rounded-xl border border-red-300 text-red-700 px-3 py-1"
-                    >
-                      Excluir
-                    </button>
+                    {transaction.projected ? (
+                      <span className="text-xs text-slate-400">Recorrência futura</span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => openEdit(transaction)}
+                          className="text-sm rounded-xl border border-slate-300 px-3 py-1"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(transaction)}
+                          className="text-sm rounded-xl border border-red-300 text-red-700 px-3 py-1"
+                        >
+                          Excluir
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
-              {transactions.length === 0 && (
+              {visibleRows.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
                     Nenhuma transação neste mês.
@@ -265,6 +298,9 @@ function Transactions() {
             </tbody>
           </table>
         </div>
+        <p className="text-xs text-slate-500 mt-3">
+          Linhas hachuradas = projeção (recorrências futuras ainda não lançadas).
+        </p>
       </div>
 
       {showForm && (

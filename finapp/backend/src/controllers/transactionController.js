@@ -2,14 +2,22 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { pool } from '../lib/db.js';
 import {
+  getBalanceBeforeMonth,
+  getMonthRealTransactions,
   getMonthTransactionsWithBalance,
   getAverageMonthlyIncome,
+  computeRunningBalance,
 } from '../services/balanceService.js';
+import { getProjectedTransactions } from '../services/projectionService.js';
 
 const listQuerySchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/),
   type: z.enum(['income', 'expense']).optional(),
   categoryId: z.string().min(1).optional(),
+});
+
+const monthTableQuerySchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/),
 });
 
 const transactionSchema = z.object({
@@ -49,6 +57,7 @@ function toTransactionRowResponse(row) {
       icon: row.category_icon,
     },
     balance: round2(row.balance),
+    projected: Boolean(row.projected),
   };
 }
 
@@ -179,6 +188,30 @@ export async function updateTransaction(req, res) {
       description: description || null,
     }),
   );
+}
+
+export async function getMonthTable(req, res) {
+  const parsedQuery = monthTableQuerySchema.safeParse(req.query);
+  if (!parsedQuery.success) {
+    return res.status(400).json({ error: 'Parâmetros inválidos.' });
+  }
+  const { month } = parsedQuery.data;
+
+  const balanceBefore = await getBalanceBeforeMonth(req.userId, month);
+  const realRows = await getMonthRealTransactions(req.userId, month);
+  const projectedRows = await getProjectedTransactions(req.userId, month);
+
+  const combined = [...realRows.map((row) => ({ ...row, projected: false })), ...projectedRows].sort(
+    (a, b) => {
+      if (a.occurred_on !== b.occurred_on) return a.occurred_on < b.occurred_on ? -1 : 1;
+      if (a.projected !== b.projected) return a.projected ? 1 : -1;
+      return 0;
+    },
+  );
+
+  const withBalance = computeRunningBalance(balanceBefore, combined);
+
+  res.json({ transactions: withBalance.map(toTransactionRowResponse) });
 }
 
 export async function deleteTransaction(req, res) {

@@ -21,6 +21,9 @@ function NavBar() {
         <Link to="/categories" className="text-slate-600 hover:text-slate-900">
           Categorias
         </Link>
+        <Link to="/recurrences" className="text-slate-600 hover:text-slate-900">
+          Recorrências
+        </Link>
       </div>
       <button onClick={handleLogout} className="text-sm text-slate-600 hover:text-slate-900">
         Sair

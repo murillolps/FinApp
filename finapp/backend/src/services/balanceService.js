@@ -23,10 +23,16 @@ export async function getBalanceBeforeMonth(userId, month) {
   return Number(user.initial_balance) + Number(sums.income) - Number(sums.expense);
 }
 
-export async function getMonthTransactionsWithBalance(userId, month) {
-  const { start, end } = monthRange(month);
-  const balanceBefore = await getBalanceBeforeMonth(userId, month);
+export function computeRunningBalance(balanceBefore, rows) {
+  let running = balanceBefore;
+  return rows.map((row) => {
+    running += row.type === 'income' ? Number(row.amount) : -Number(row.amount);
+    return { ...row, balance: running };
+  });
+}
 
+export async function getMonthRealTransactions(userId, month) {
+  const { start, end } = monthRange(month);
   const [rows] = await pool.query(
     `SELECT t.*, c.name AS category_name, c.color AS category_color, c.icon AS category_icon
      FROM transactions t
@@ -35,14 +41,13 @@ export async function getMonthTransactionsWithBalance(userId, month) {
      ORDER BY t.occurred_on ASC, t.created_at ASC, t.id ASC`,
     [userId, start, end],
   );
+  return rows;
+}
 
-  let running = balanceBefore;
-  const transactions = rows.map((row) => {
-    running += row.type === 'income' ? Number(row.amount) : -Number(row.amount);
-    return { ...row, balance: running };
-  });
-
-  return { balanceBefore, transactions };
+export async function getMonthTransactionsWithBalance(userId, month) {
+  const balanceBefore = await getBalanceBeforeMonth(userId, month);
+  const rows = await getMonthRealTransactions(userId, month);
+  return { balanceBefore, transactions: computeRunningBalance(balanceBefore, rows) };
 }
 
 export async function getAverageMonthlyIncome(userId) {
