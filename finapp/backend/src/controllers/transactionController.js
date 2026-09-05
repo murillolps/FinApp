@@ -2,13 +2,10 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { pool } from '../lib/db.js';
 import {
-  getBalanceBeforeMonth,
-  getMonthRealTransactions,
   getMonthTransactionsWithBalance,
   getAverageMonthlyIncome,
-  computeRunningBalance,
+  getMonthCombinedTransactions,
 } from '../services/balanceService.js';
-import { getProjectedTransactions } from '../services/projectionService.js';
 
 const listQuerySchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/),
@@ -197,21 +194,9 @@ export async function getMonthTable(req, res) {
   }
   const { month } = parsedQuery.data;
 
-  const balanceBefore = await getBalanceBeforeMonth(req.userId, month);
-  const realRows = await getMonthRealTransactions(req.userId, month);
-  const projectedRows = await getProjectedTransactions(req.userId, month);
+  const { rows } = await getMonthCombinedTransactions(req.userId, month);
 
-  const combined = [...realRows.map((row) => ({ ...row, projected: false })), ...projectedRows].sort(
-    (a, b) => {
-      if (a.occurred_on !== b.occurred_on) return a.occurred_on < b.occurred_on ? -1 : 1;
-      if (a.projected !== b.projected) return a.projected ? 1 : -1;
-      return 0;
-    },
-  );
-
-  const withBalance = computeRunningBalance(balanceBefore, combined);
-
-  res.json({ transactions: withBalance.map(toTransactionRowResponse) });
+  res.json({ transactions: rows.map(toTransactionRowResponse) });
 }
 
 export async function deleteTransaction(req, res) {

@@ -1,4 +1,5 @@
 import { pool } from '../lib/db.js';
+import { getProjectedTransactions } from './projectionService.js';
 
 function monthRange(month) {
   const [year, mon] = month.split('-').map(Number);
@@ -10,9 +11,14 @@ function monthRange(month) {
   return { start, end };
 }
 
+export async function getInitialBalance(userId) {
+  const [[user]] = await pool.query('SELECT initial_balance FROM users WHERE id = ?', [userId]);
+  return Number(user.initial_balance);
+}
+
 export async function getBalanceBeforeMonth(userId, month) {
   const { start } = monthRange(month);
-  const [[user]] = await pool.query('SELECT initial_balance FROM users WHERE id = ?', [userId]);
+  const initialBalance = await getInitialBalance(userId);
   const [[sums]] = await pool.query(
     `SELECT
        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
@@ -20,7 +26,28 @@ export async function getBalanceBeforeMonth(userId, month) {
      FROM transactions WHERE user_id = ? AND occurred_on < ?`,
     [userId, start],
   );
-  return Number(user.initial_balance) + Number(sums.income) - Number(sums.expense);
+  return initialBalance + Number(sums.income) - Number(sums.expense);
+}
+
+export async function getBalanceAsOf(userId, dateISO) {
+  const initialBalance = await getInitialBalance(userId);
+  const [[sums]] = await pool.query(
+    `SELECT
+       COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
+       COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
+     FROM transactions WHERE user_id = ? AND occurred_on <= ?`,
+    [userId, dateISO],
+  );
+  return initialBalance + Number(sums.income) - Number(sums.expense);
+}
+
+export async function getTransactionsUpTo(userId, dateISO) {
+  const [rows] = await pool.query(
+    `SELECT * FROM transactions WHERE user_id = ? AND occurred_on <= ?
+     ORDER BY occurred_on ASC, created_at ASC, id ASC`,
+    [userId, dateISO],
+  );
+  return rows;
 }
 
 export function computeRunningBalance(balanceBefore, rows) {
@@ -48,6 +75,23 @@ export async function getMonthTransactionsWithBalance(userId, month) {
   const balanceBefore = await getBalanceBeforeMonth(userId, month);
   const rows = await getMonthRealTransactions(userId, month);
   return { balanceBefore, transactions: computeRunningBalance(balanceBefore, rows) };
+}
+
+export async function getMonthCombinedTransactions(userId, month) {
+  const balanceBefore = await getBalanceBeforeMonth(userId, month);
+  const realRows = await getMonthRealTransactions(userId, month);
+  const projectedRows = await getProjectedTransactions(userId, month);
+
+  const combined = [
+    ...realRows.map((row) => ({ ...row, projected: false })),
+    ...projectedRows,
+  ].sort((a, b) => {
+    if (a.occurred_on !== b.occurred_on) return a.occurred_on < b.occurred_on ? -1 : 1;
+    if (a.projected !== b.projected) return a.projected ? 1 : -1;
+    return 0;
+  });
+
+  return { balanceBefore, rows: computeRunningBalance(balanceBefore, combined) };
 }
 
 export async function getAverageMonthlyIncome(userId) {
