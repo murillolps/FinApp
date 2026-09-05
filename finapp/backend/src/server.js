@@ -4,6 +4,7 @@ import cors from 'cors';
 import { authRoutes } from './routes/authRoutes.js';
 import { userRoutes } from './routes/userRoutes.js';
 import { categoryRoutes } from './routes/categoryRoutes.js';
+import { transactionRoutes } from './routes/transactionRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -18,6 +19,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

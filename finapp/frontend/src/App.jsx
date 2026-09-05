@@ -3,6 +3,7 @@ import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Categories from './pages/Categories.jsx';
+import Transactions from './pages/Transactions.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
 
 function App() {
@@ -24,6 +25,14 @@ function App() {
         element={
           <PrivateRoute>
             <Categories />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/transactions"
+        element={
+          <PrivateRoute>
+            <Transactions />
           </PrivateRoute>
         }
       />

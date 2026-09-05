@@ -15,6 +15,9 @@ function NavBar() {
         <Link to="/dashboard" className="text-slate-600 hover:text-slate-900">
           Dashboard
         </Link>
+        <Link to="/transactions" className="text-slate-600 hover:text-slate-900">
+          Lançamentos
+        </Link>
         <Link to="/categories" className="text-slate-600 hover:text-slate-900">
           Categorias
         </Link>
