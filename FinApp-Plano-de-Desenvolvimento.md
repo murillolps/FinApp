@@ -156,84 +156,68 @@ Importação de extratos bancários (OFX/CSV), Open Finance/Pix, login social co
 
 Quatro entidades: `User`, `Category`, `Transaction`, `Recurrence`. Toda entidade derivada carrega `userId` para isolamento de dados. O diagrama ER visual está na aba "Modelo de Dados" do `wireframes-finapp.html`.
 
-Schema completo do Prisma (este é o contrato de dados — implementar exatamente assim na Fase 1):
+Schema completo em SQL puro (este é o contrato de dados — implementar exatamente assim na Fase 1, em `backend/db/schema.sql`):
 
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
+```sql
+CREATE TABLE users (
+  id               CHAR(36)      PRIMARY KEY,
+  email            VARCHAR(255)  NOT NULL UNIQUE,
+  name             VARCHAR(255)  NOT NULL,
+  password_hash    VARCHAR(255)  NOT NULL,
+  initial_balance  DECIMAL(10,2) NOT NULL DEFAULT 0,
+  created_at       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
+CREATE TABLE categories (
+  id          CHAR(36)              PRIMARY KEY,
+  user_id     CHAR(36)              NOT NULL,
+  name        VARCHAR(100)          NOT NULL,
+  type        ENUM('income','expense') NOT NULL,
+  color       VARCHAR(20)           NOT NULL,
+  icon        VARCHAR(10)           NOT NULL,
+  archived    BOOLEAN               NOT NULL DEFAULT FALSE,
+  created_at  DATETIME              NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  INDEX idx_categories_user (user_id)
+);
 
-model User {
-  id            String        @id @default(uuid())
-  email         String        @unique
-  name          String
-  passwordHash  String
-  initialBalance Decimal      @default(0) @db.Decimal(10, 2)
-  createdAt     DateTime      @default(now())
-  categories    Category[]
-  transactions  Transaction[]
-  recurrences   Recurrence[]
-}
+CREATE TABLE recurrences (
+  id            CHAR(36)                          PRIMARY KEY,
+  user_id       CHAR(36)                          NOT NULL,
+  category_id   CHAR(36)                          NOT NULL,
+  type          ENUM('income','expense')          NOT NULL,
+  amount        DECIMAL(10,2)                     NOT NULL,
+  description   VARCHAR(255)                      NOT NULL,
+  frequency     ENUM('monthly','weekly','yearly') NOT NULL,
+  day_of_month  INT                                NOT NULL,
+  start_date    DATE                               NOT NULL,
+  end_date      DATE                               NULL,
+  active        BOOLEAN                            NOT NULL DEFAULT TRUE,
+  created_at    DATETIME                           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (category_id) REFERENCES categories(id),
+  INDEX idx_recurrences_user_active (user_id, active)
+);
 
-model Category {
-  id           String        @id @default(uuid())
-  userId       String
-  user         User          @relation(fields: [userId], references: [id])
-  name         String
-  type         String        // "income" | "expense"
-  color        String
-  icon         String
-  archived     Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  transactions Transaction[]
-  recurrences  Recurrence[]
-
-  @@index([userId])
-}
-
-model Transaction {
-  id            String      @id @default(uuid())
-  userId        String
-  user          User        @relation(fields: [userId], references: [id])
-  categoryId    String
-  category      Category    @relation(fields: [categoryId], references: [id])
-  recurrenceId  String?
-  recurrence    Recurrence? @relation(fields: [recurrenceId], references: [id])
-  type          String      // "income" | "expense"
-  amount        Decimal     @db.Decimal(10, 2)
-  occurredOn    DateTime    @db.Date
-  description   String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  @@index([userId, occurredOn])
-}
-
-model Recurrence {
-  id           String        @id @default(uuid())
-  userId       String
-  user         User          @relation(fields: [userId], references: [id])
-  categoryId   String
-  category     Category      @relation(fields: [categoryId], references: [id])
-  type         String        // "income" | "expense"
-  amount       Decimal       @db.Decimal(10, 2)
-  description  String
-  frequency    String        // "monthly" | "weekly" | "yearly"
-  dayOfMonth   Int
-  startDate    DateTime      @db.Date
-  endDate      DateTime?     @db.Date
-  active       Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  transactions Transaction[]
-
-  @@index([userId, active])
-}
+CREATE TABLE transactions (
+  id             CHAR(36)                 PRIMARY KEY,
+  user_id        CHAR(36)                 NOT NULL,
+  category_id    CHAR(36)                 NOT NULL,
+  recurrence_id  CHAR(36)                 NULL,
+  type           ENUM('income','expense') NOT NULL,
+  amount         DECIMAL(10,2)            NOT NULL,
+  occurred_on    DATE                     NOT NULL,
+  description    VARCHAR(255)             NULL,
+  created_at     DATETIME                 NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME                 NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (category_id) REFERENCES categories(id),
+  FOREIGN KEY (recurrence_id) REFERENCES recurrences(id),
+  INDEX idx_transactions_user_date (user_id, occurred_on)
+);
 ```
+
+Os `id` são UUIDs gerados na aplicação (`crypto.randomUUID()`), não no banco. Datas de auditoria (`created_at`/`updated_at`) ficam a cargo do MySQL via `DEFAULT`/`ON UPDATE`.
 
 **Categorias-semente** criadas no cadastro do usuário (RF-05):
 
@@ -262,7 +246,7 @@ A stack é **fixa**. Use exatamente estas bibliotecas.
 
 ## Backend
 - Node.js LTS + Express
-- Prisma ORM
+- mysql2 (driver MySQL, com `mysql2/promise` e pool de conexões — sem ORM)
 - MySQL 8.x
 - bcrypt (hash de senha)
 - jsonwebtoken (JWT)
@@ -272,7 +256,7 @@ A stack é **fixa**. Use exatamente estas bibliotecas.
 - nodemon (dev)
 
 ## Ferramentas
-VS Code, Git + GitHub, MySQL Workbench ou DBeaver, Postman ou Insomnia, Prisma Studio.
+VS Code, Git + GitHub, MySQL Workbench ou DBeaver, Postman ou Insomnia.
 
 ## Hospedagem (Fase 8)
 Frontend na Vercel; backend no Railway ou Render; MySQL no Railway ou PlanetScale.
@@ -293,10 +277,10 @@ finapp/
 │   │   ├── controllers/
 │   │   ├── middlewares/
 │   │   ├── services/        ← lógica de negócio (cálculo de saldo, projeção)
-│   │   ├── lib/             ← prisma client, helpers
+│   │   ├── lib/             ← pool de conexão mysql2, helpers
 │   │   └── server.js
-│   ├── prisma/
-│   │   └── schema.prisma
+│   ├── db/
+│   │   └── schema.sql
 │   ├── .env                 ← NÃO versionar
 │   └── package.json
 ├── frontend/
@@ -319,7 +303,7 @@ finapp/
 - **Dinheiro:** sempre `Decimal` no banco; nunca usar `float`. No JS, tratar como string/número com 2 casas e arredondar com cuidado.
 - **Datas:** armazenar como `Date`; considerar fuso America/Sao_Paulo nos cálculos de "mês corrente".
 - **Validação:** todo payload de entrada das rotas é validado com `zod` antes de tocar o banco.
-- **Segurança:** toda rota (exceto `/api/auth/*`) passa pelo middleware de autenticação; toda query Prisma filtra por `userId`.
+- **Segurança:** toda rota (exceto `/api/auth/*`) passa pelo middleware de autenticação; toda query SQL filtra por `user_id`. Todo valor interpolado em SQL usa placeholders (`?`) do `mysql2` — nunca concatenação de string, para evitar SQL injection.
 - **Commits:** uma fase = um ou mais commits descritivos em português. Ex.: `git commit -m "Fase 3: CRUD de categorias (backend e frontend)"`.
 - **.env nunca versionado.** Manter um `.env.example` com as chaves sem valores.
 
@@ -376,7 +360,7 @@ Todas as rotas abaixo de `/api`. Todas (exceto `/api/auth/*`) exigem header `Aut
 **Tarefas:**
 1. Criar a estrutura de pastas (`finapp/`, `backend/`, `frontend/`).
 2. Criar `.gitignore` na raiz com: `node_modules/`, `.env`, `dist/`, `build/`, `*.log`.
-3. **Backend:** `npm init -y`; instalar `express cors dotenv bcrypt jsonwebtoken zod @prisma/client` e `--save-dev nodemon prisma`.
+3. **Backend:** `npm init -y`; instalar `express cors dotenv bcrypt jsonwebtoken zod mysql2` e `--save-dev nodemon`.
 4. Criar `backend/src/server.js` com Express, `cors()`, `express.json()` e a rota `GET /api/health` retornando `{ status: 'ok' }`.
 5. Adicionar scripts `dev` (nodemon) e `start` no `package.json` do backend.
 6. **Frontend:** `npm create vite@latest . -- --template react` (variante JavaScript); `npm install`; instalar `react-router-dom axios recharts` e `-D tailwindcss postcss autoprefixer`; rodar `npx tailwindcss init -p` e configurar Tailwind.
@@ -399,15 +383,16 @@ Aguarde "pode seguir".
 **Objetivo:** ter o MySQL conectado e as tabelas criadas.
 
 **Tarefas:**
-1. Rodar `npx prisma init --datasource-provider mysql` no backend.
-2. Pedir ao Murillo para criar o banco `finapp` no MySQL Workbench (`CREATE DATABASE finapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`) e preencher `DATABASE_URL`, `JWT_SECRET` e `PORT` no `.env`. Criar também `.env.example`.
-3. Escrever o `schema.prisma` exatamente como na Parte IV deste documento.
-4. Rodar `npx prisma migrate dev --name init`.
-5. Criar `backend/src/lib/prisma.js` exportando uma instância única do `PrismaClient`.
+1. Subir o MySQL local via Docker: `finapp/docker-compose.yml` sobe um MySQL 8 na porta `3306` com o banco `finapp` já criado (usuário `root`, senha `finapp`). Alternativa sem Docker: criar o banco manualmente no MySQL Workbench (`CREATE DATABASE finapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`).
+2. Pedir ao Murillo para preencher `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET` e `PORT` no `.env` (copiado de `.env.example`).
+3. Escrever `backend/db/schema.sql` exatamente como na Parte IV deste documento.
+4. Rodar o script para criar as 4 tabelas: via Docker, `docker exec -i finapp-mysql mysql -uroot -pfinapp finapp < backend/db/schema.sql`; ou `mysql -u root -p finapp < db/schema.sql` apontando para uma instância local/Workbench.
+5. Criar `backend/src/lib/db.js` exportando um pool de conexões (`mysql2/promise`, `mysql.createPool({...})`) configurado a partir das variáveis do `.env`.
 
 **Critérios de aceite:**
-- As 4 tabelas (`User`, `Category`, `Transaction`, `Recurrence`) existem no banco.
-- `npx prisma studio` abre e mostra as tabelas vazias.
+- As 4 tabelas (`users`, `categories`, `recurrences`, `transactions`) existem no banco.
+- `docker exec -it finapp-mysql mysql -uroot -pfinapp finapp -e "SHOW TABLES;"` (ou MySQL Workbench/DBeaver) mostra as tabelas vazias.
+- Um script simples (ex.: `node -e "..."` chamando o pool) confirma que o backend consegue conectar e rodar `SELECT 1`.
 
 ```
 ⏸️ CHECKPOINT — FASE 1
@@ -438,7 +423,7 @@ Aguarde "pode seguir".
 - Criar conta pelo frontend redireciona ao dashboard; recarregar a página mantém o login.
 - Logout limpa o token e volta ao login.
 - Acessar `/dashboard` sem token redireciona para `/login`.
-- As 7 categorias-semente aparecem no Prisma Studio após o cadastro.
+- As 7 categorias-semente aparecem na tabela `categories` (via MySQL Workbench/DBeaver) após o cadastro.
 
 ```
 ⏸️ CHECKPOINT — FASE 2
