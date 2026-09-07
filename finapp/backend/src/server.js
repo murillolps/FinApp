@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { authRoutes } from './routes/authRoutes.js';
 import { userRoutes } from './routes/userRoutes.js';
 import { categoryRoutes } from './routes/categoryRoutes.js';
@@ -11,6 +12,9 @@ import { reportRoutes } from './routes/reportRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
+
+app.set('trust proxy', 1);
+app.use(helmet());
 
 const corsOrigin = process.env.CORS_ORIGIN;
 app.use(cors({ origin: corsOrigin ? corsOrigin.split(',') : true }));
