@@ -11,6 +11,12 @@ function monthRange(month) {
   return { start, end };
 }
 
+export function getMonthLastDay(month) {
+  const [year, mon] = month.split('-').map(Number);
+  const lastDay = new Date(year, mon, 0).getDate();
+  return `${month}-${String(lastDay).padStart(2, '0')}`;
+}
+
 export async function getInitialBalance(userId) {
   const [[user]] = await pool.query('SELECT initial_balance FROM users WHERE id = ?', [userId]);
   return Number(user.initial_balance);

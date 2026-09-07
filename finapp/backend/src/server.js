@@ -7,6 +7,7 @@ import { categoryRoutes } from './routes/categoryRoutes.js';
 import { transactionRoutes } from './routes/transactionRoutes.js';
 import { recurrenceRoutes } from './routes/recurrenceRoutes.js';
 import { dashboardRoutes } from './routes/dashboardRoutes.js';
+import { reportRoutes } from './routes/reportRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -24,6 +25,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/recurrences', recurrenceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

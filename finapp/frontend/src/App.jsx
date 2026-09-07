@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Categories from './pages/Categories.jsx';
 import Transactions from './pages/Transactions.jsx';
 import Recurrences from './pages/Recurrences.jsx';
+import Reports from './pages/Reports.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
 
 function App() {
@@ -42,6 +43,14 @@ function App() {
         element={
           <PrivateRoute>
             <Recurrences />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <PrivateRoute>
+            <Reports />
           </PrivateRoute>
         }
       />
