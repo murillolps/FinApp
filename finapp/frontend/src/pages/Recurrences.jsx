@@ -21,9 +21,19 @@ function Recurrences() {
   const [status, setStatus] = useState('all');
   const [editingRecurrence, setEditingRecurrence] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   function loadRecurrences() {
-    api.get('/recurrences', { params: { status } }).then(({ data }) => setRecurrences(data));
+    setLoading(true);
+    api
+      .get('/recurrences', { params: { status } })
+      .then(({ data }) => {
+        setRecurrences(data);
+        setError('');
+      })
+      .catch(() => setError('Não foi possível carregar as recorrências.'))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
@@ -65,7 +75,7 @@ function Recurrences() {
     <div className="min-h-screen bg-slate-50">
       <NavBar />
       <div className="max-w-5xl mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
           <h1 className="text-2xl font-bold">Recorrências</h1>
           <button onClick={openCreate} className="rounded-2xl bg-slate-900 text-white px-4 py-2">
             + Nova recorrência
@@ -99,7 +109,21 @@ function Recurrences() {
               </tr>
             </thead>
             <tbody>
-              {recurrences.map((recurrence) => (
+              {loading && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-6 text-center text-slate-400">
+                    Carregando...
+                  </td>
+                </tr>
+              )}
+              {!loading && error && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-6 text-center text-red-600">
+                    {error}
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && recurrences.map((recurrence) => (
                 <tr key={recurrence.id} className="border-t border-slate-100">
                   <td className="px-4 py-3">{recurrence.description}</td>
                   <td className="px-4 py-3">
@@ -155,7 +179,7 @@ function Recurrences() {
                   </td>
                 </tr>
               ))}
-              {recurrences.length === 0 && (
+              {!loading && !error && recurrences.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
                     Nenhuma recorrência encontrada.

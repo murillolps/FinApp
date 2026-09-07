@@ -56,6 +56,8 @@ function Dashboard() {
   const [categories, setCategories] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formDefaultType, setFormDefaultType] = useState('expense');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api
@@ -66,7 +68,15 @@ function Dashboard() {
   }, [navigate]);
 
   function loadDashboard() {
-    api.get('/dashboard', { params: { month } }).then(({ data }) => setDashboard(data));
+    setLoading(true);
+    api
+      .get('/dashboard', { params: { month } })
+      .then(({ data }) => {
+        setDashboard(data);
+        setError('');
+      })
+      .catch(() => setError('Não foi possível carregar o dashboard. Tente novamente.'))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
@@ -106,7 +116,7 @@ function Dashboard() {
             <p className="text-sm text-slate-500">Olá, {user ? user.name : '...'} 👋</p>
             <p className="text-lg font-bold">{formatMonthLabel(month)}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             <button
               onClick={() => setMonth((m) => shiftMonth(m, -1))}
               className="rounded-xl border border-slate-300 px-3 py-2"
@@ -127,6 +137,13 @@ function Dashboard() {
             </button>
           </div>
         </div>
+
+        {loading && !dashboard && (
+          <p className="text-center text-slate-400 py-10">Carregando...</p>
+        )}
+        {!loading && error && (
+          <p className="text-center text-red-600 py-10">{error}</p>
+        )}
 
         {dashboard && (
           <>

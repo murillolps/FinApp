@@ -12,7 +12,8 @@ import { reportRoutes } from './routes/reportRoutes.js';
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.use(cors());
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(cors({ origin: corsOrigin ? corsOrigin.split(',') : true }));
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {

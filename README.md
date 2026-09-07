@@ -24,8 +24,34 @@ Este repositório contém o MVP do FinApp, com backend em Node.js/Express e fron
 ### Frontend
 1. Abra o terminal em `finapp/frontend`
 2. Execute `npm install`
-3. Execute `npm run dev`
+3. (Opcional em dev) copie `.env.example` para `.env` se quiser apontar para um backend que não seja `http://localhost:3001`
+4. Execute `npm run dev`
 
 ## Notas
 - O backend expõe `/api/health` para verificar se o servidor está funcionando.
 - O frontend está configurado com React Router e Tailwind CSS.
+
+## Produção (deploy)
+
+O banco de dados já roda na nuvem (Clever Cloud, ver acima). Faltam backend e frontend.
+
+### Backend (Railway ou Render)
+1. Crie uma conta e um novo serviço "Web Service" apontando para este repositório, pasta raiz `finapp/backend`
+2. Build command: `npm install` · Start command: `npm start` (ou `node src/server.js`)
+3. Configure as variáveis de ambiente de produção (mesmas do `.env`, com os dados do Clever Cloud):
+   `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSL=true`, `JWT_SECRET`, `PORT` (a plataforma geralmente define sozinha)
+4. Depois de publicar o frontend (próximo passo) e saber a URL dele, defina `CORS_ORIGIN` com essa URL (ex.: `https://finapp.vercel.app`) para restringir quem pode chamar a API
+5. Anote a URL pública do backend (ex.: `https://finapp-backend.up.railway.app`)
+
+### Frontend (Vercel)
+1. Crie uma conta na [Vercel](https://vercel.com/) e importe este repositório
+2. Root directory: `finapp/frontend` · Framework preset: Vite
+3. Configure a variável de ambiente `VITE_API_URL` apontando para a URL pública do backend + `/api` (ex.: `https://finapp-backend.up.railway.app/api`)
+4. Deploy. A Vercel dá uma URL pública com HTTPS automaticamente
+
+### Checklist final
+- [ ] Backend publicado e `/api/health` responde `{"status":"ok"}`
+- [ ] Frontend publicado, `VITE_API_URL` aponta pro backend certo
+- [ ] `CORS_ORIGIN` do backend aponta pra URL do frontend
+- [ ] Fluxo completo testado em produção: cadastro → onboarding → lançamento → dashboard
+- [ ] Testado em tela de celular (ou modo responsivo do navegador)

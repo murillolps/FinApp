@@ -55,6 +55,8 @@ function Transactions() {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [formDefaultType, setFormDefaultType] = useState('expense');
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api.get('/categories').then(({ data }) => setCategories(data));
@@ -65,9 +67,15 @@ function Transactions() {
   }
 
   function loadMonthTable() {
-    api.get('/transactions/month-table', { params: { month } }).then(({ data }) => {
-      setRows(data.transactions);
-    });
+    setLoading(true);
+    api
+      .get('/transactions/month-table', { params: { month } })
+      .then(({ data }) => {
+        setRows(data.transactions);
+        setError('');
+      })
+      .catch(() => setError('Não foi possível carregar as transações.'))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
@@ -123,7 +131,7 @@ function Transactions() {
         </p>
 
         <div className="bg-white rounded-3xl shadow-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setMonth((m) => shiftMonth(m, -1))}
               className="rounded-xl border border-slate-300 px-3 py-2"
@@ -182,7 +190,7 @@ function Transactions() {
         </div>
 
         {summary && (
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div className="bg-white rounded-3xl shadow-lg p-4 text-center">
               <p className="text-sm text-slate-500">Entradas realizadas</p>
               <p className="text-lg font-bold text-green-600">
@@ -224,7 +232,21 @@ function Transactions() {
               </tr>
             </thead>
             <tbody>
-              {visibleRows.map((transaction) => (
+              {loading && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-6 text-center text-slate-400">
+                    Carregando...
+                  </td>
+                </tr>
+              )}
+              {!loading && error && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-6 text-center text-red-600">
+                    {error}
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && visibleRows.map((transaction) => (
                 <tr
                   key={transaction.id}
                   className="border-t border-slate-100"
@@ -288,7 +310,7 @@ function Transactions() {
                   </td>
                 </tr>
               ))}
-              {visibleRows.length === 0 && (
+              {!loading && !error && visibleRows.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
                     Nenhuma transação neste mês.

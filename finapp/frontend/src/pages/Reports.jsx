@@ -51,20 +51,31 @@ function Reports() {
   const [byCategory, setByCategory] = useState([]);
   const [monthlyBalance, setMonthlyBalance] = useState([]);
   const [incomeVsExpense, setIncomeVsExpense] = useState([]);
+  const [categoryLoading, setCategoryLoading] = useState(true);
+  const [categoryError, setCategoryError] = useState('');
+  const [trendsError, setTrendsError] = useState('');
 
   useEffect(() => {
+    setCategoryLoading(true);
     api
       .get('/reports/by-category', { params: { month } })
-      .then(({ data }) => setByCategory(data));
+      .then(({ data }) => {
+        setByCategory(data);
+        setCategoryError('');
+      })
+      .catch(() => setCategoryError('Não foi possível carregar este relatório.'))
+      .finally(() => setCategoryLoading(false));
   }, [month]);
 
   useEffect(() => {
     api
       .get('/reports/monthly-balance', { params: { months: MONTHS_WINDOW } })
-      .then(({ data }) => setMonthlyBalance(data));
+      .then(({ data }) => setMonthlyBalance(data))
+      .catch(() => setTrendsError('Não foi possível carregar os gráficos de tendência.'));
     api
       .get('/reports/income-vs-expense', { params: { months: MONTHS_WINDOW } })
-      .then(({ data }) => setIncomeVsExpense(data));
+      .then(({ data }) => setIncomeVsExpense(data))
+      .catch(() => setTrendsError('Não foi possível carregar os gráficos de tendência.'));
   }, []);
 
   const categoryTotal = byCategory.reduce((sum, item) => sum + item.total, 0);
@@ -77,10 +88,11 @@ function Reports() {
         <p className="text-slate-500 mb-6">
           Visualizações pra entender padrões: pra onde o dinheiro vai, como está mês a mês.
         </p>
+        {trendsError && <p className="text-sm text-red-600 mb-4">{trendsError}</p>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="bg-white rounded-3xl shadow-lg p-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
               <h3 className="font-semibold">Gastos por categoria</h3>
               <div className="flex items-center gap-1">
                 <button
@@ -99,29 +111,38 @@ function Reports() {
               </div>
             </div>
 
-            {byCategory.length === 0 ? (
+            {categoryLoading && (
+              <p className="text-sm text-slate-400 text-center py-10">Carregando...</p>
+            )}
+            {!categoryLoading && categoryError && (
+              <p className="text-sm text-red-600 text-center py-10">{categoryError}</p>
+            )}
+            {!categoryLoading && !categoryError && byCategory.length === 0 && (
               <p className="text-sm text-slate-400 text-center py-10">
                 Nenhum gasto neste mês.
               </p>
-            ) : (
-              <div className="flex items-center gap-4">
-                <ResponsiveContainer width="60%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={byCategory}
-                      dataKey="total"
-                      nameKey="categoryName"
-                      innerRadius={45}
-                      outerRadius={90}
-                    >
-                      {byCategory.map((entry) => (
-                        <Cell key={entry.categoryName} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <ul className="flex-1 space-y-1 text-sm">
+            )}
+            {!categoryLoading && !categoryError && byCategory.length > 0 && (
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="w-full md:w-3/5">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={byCategory}
+                        dataKey="total"
+                        nameKey="categoryName"
+                        innerRadius={45}
+                        outerRadius={90}
+                      >
+                        {byCategory.map((entry) => (
+                          <Cell key={entry.categoryName} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => formatCurrency(value)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <ul className="w-full md:flex-1 space-y-1 text-sm">
                   {byCategory.map((item) => (
                     <li key={item.categoryName} className="flex items-center gap-2">
                       <span

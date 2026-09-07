@@ -25,16 +25,19 @@ function OnboardingModal({ onComplete }) {
       <div className="max-w-sm w-full bg-white rounded-3xl shadow-lg p-8">
         <h2 className="text-xl font-bold mb-2">Bem-vindo(a)!</h2>
         <p className="text-slate-600 mb-4">
-          Para começar, informe o saldo atual da sua carteira.
+          Para começar, informe quanto você tem hoje (conta + carteira). É só o ponto de
+          partida — dá pra ajustar depois.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="number"
             step="0.01"
+            inputMode="decimal"
             placeholder="Saldo inicial (R$)"
             value={initialBalance}
             onChange={(event) => setInitialBalance(event.target.value)}
             className="w-full rounded-xl border border-slate-300 px-4 py-2"
+            autoFocus
             required
           />
           {error && <p className="text-red-600 text-sm">{error}</p>}
