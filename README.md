@@ -59,6 +59,6 @@ O banco de dados já roda na nuvem (Clever Cloud, ver acima).
 ### Checklist final
 - [x] Backend publicado e `/api/health` responde `{"status":"ok"}`
 - [x] Frontend publicado, `VITE_API_URL` aponta pro backend certo
-- [ ] `CORS_ORIGIN` do backend aponta pra URL do frontend
+- [x] `CORS_ORIGIN` do backend aponta pra URL do frontend
 - [x] Login/cadastro testados em produção, pelo celular
-- [ ] Fluxo completo testado em produção: onboarding → lançamento → dashboard → relatórios
+- [x] Fluxo completo testado em produção: onboarding → lançamento → dashboard → relatórios
