@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import OnboardingModal from '../components/OnboardingModal.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
 
 function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -18,6 +20,12 @@ function Register() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
+
+    if (form.password !== confirmPassword) {
+      setError('As senhas não coincidem.');
+      return;
+    }
+
     setLoading(true);
     try {
       const { data } = await api.post('/auth/register', form);
@@ -52,15 +60,21 @@ function Register() {
             className="w-full rounded-xl border border-slate-300 px-4 py-2"
             required
           />
-          <input
+          <PasswordInput
             name="password"
-            type="password"
             placeholder="Senha (mín. 6 caracteres)"
             value={form.password}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-300 px-4 py-2"
             minLength={6}
-            required
+            autoComplete="new-password"
+          />
+          <PasswordInput
+            name="confirmPassword"
+            placeholder="Confirmar senha"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            minLength={6}
+            autoComplete="new-password"
           />
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <button
